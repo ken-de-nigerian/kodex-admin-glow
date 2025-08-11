@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kodex Admin Dashboard — Tailwind HTML</title>
+  <meta name="description" content="Kodex-style admin dashboard UI built with only HTML, Tailwind CSS (CDN) and vanilla JavaScript." />
+  <link rel="canonical" href="/kodex-dashboard.html" />
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: '#F59E0B',
+            bg: '#F9FAFB',
+            text: '#1F2937',
+            muted: '#6B7280',
+          },
+          boxShadow: {
+            subtle: '0 10px 30px -10px rgba(31,41,55,0.08)',
+          },
+          borderRadius: {
+            xl: '0.75rem',
+          },
+          keyframes: {
+            fadeIn: { '0%': { opacity: 0, transform: 'translateY(10px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } },
+            scaleIn: { '0%': { opacity: 0, transform: 'scale(.98)' }, '100%': { opacity: 1, transform: 'scale(1)' } },
+            slideIn: { '0%': { transform: 'translateX(-100%)' }, '100%': { transform: 'translateX(0)' } },
+          },
+          animation: {
+            fadeIn: 'fadeIn .3s ease-out',
+            scaleIn: 'scaleIn .2s ease-out',
+            slideIn: 'slideIn .25s ease-out',
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* icon helper */
+    .icon { width: 20px; height: 20px; }
+  </style>
+</head>
+<body class="bg-bg text-text selection:bg-brand/20 selection:text-text">
+  <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 bg-white border rounded px-3 py-2">Skip to content</a>
+
+  <!-- Mobile header -->
+  <header class="lg:hidden sticky top-0 z-40 border-b bg-white/90 dark:bg-slate-900/80 backdrop-blur">
+    <div class="h-14 flex items-center gap-3 px-4">
+      <button id="btn-open" class="p-2 border rounded-md hover:bg-gray-50 dark:hover:bg-slate-800" aria-label="Open sidebar">☰</button>
+      <div class="relative flex-1">
+        <input id="search" placeholder="Search" class="w-full bg-white dark:bg-slate-900 border rounded-xl pl-10 pr-24 py-2 outline-none focus:ring-2 ring-brand" />
+        <svg class="icon absolute left-3 top-1/2 -translate-y-1/2 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.35-4.35M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z"/></svg>
+        <button id="btn-search" class="absolute right-2 top-1/2 -translate-y-1/2 bg-brand text-white px-3 py-1.5 rounded-lg text-sm">Search</button>
+      </div>
+      <button id="btn-theme" class="p-2 border rounded-md hover:bg-gray-50 dark:hover:bg-slate-800" aria-label="Toggle theme">🌗</button>
+    </div>
+  </header>
+
+  <!-- Layout -->
+  <div class="flex min-h-screen">
+    <!-- Sidebar overlay -->
+    <div id="overlay" class="fixed inset-0 bg-black/30 z-40 hidden lg:hidden"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed lg:static z-50 w-72 h-full lg:h-auto bg-white dark:bg-slate-900 border-r shadow-subtle transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
+      <div class="h-16 flex items-center justify-between px-5 border-b">
+        <div class="flex items-center gap-2">
+          <div class="h-8 w-8 rounded-full bg-brand"></div>
+          <span class="font-semibold tracking-tight">KODEX</span>
+        </div>
+        <button id="btn-close" class="lg:hidden p-2 border rounded-md hover:bg-gray-50 dark:hover:bg-slate-800" aria-label="Close sidebar">✕</button>
+      </div>
+
+      <nav class="p-4 space-y-1">
+        <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-xl bg-brand/10 text-brand">
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 0 0 1 1h3m10-11l2 2m-2-2v10a1 1 0 0 1-1 1h-3m-6 0h6"/></svg>
+          <span>Dashboard</span>
+        </a>
+
+        <!-- User Management group -->
+        <div>
+          <button data-acc="um" class="group w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 0 0-5-3.87M9 20H4v-2a4 4 0 0 1 5-3.87M7 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm10 0a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/></svg>
+            <span class="flex-1 text-left">User Management</span>
+            <svg class="icon rotate-0 transition-transform group-[.open]:rotate-180" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.25 8.29a.75.75 0 0 1-.02-1.08Z" clip-rule="evenodd"/></svg>
+          </button>
+          <div id="um" class="ml-10 mt-1 hidden animate-fadeIn space-y-1">
+            <a href="#" class="block px-2 py-1.5 rounded-lg text-muted hover:text-text hover:bg-gray-50 dark:hover:bg-slate-800">Users</a>
+            <a href="#" class="block px-2 py-1.5 rounded-lg text-muted hover:text-text hover:bg-gray-50 dark:hover:bg-slate-800">Roles</a>
+          </div>
+        </div>
+
+        <!-- Course Oversight group -->
+        <div>
+          <button data-acc="co" class="group w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"/></svg>
+            <span class="flex-1 text-left">Course Oversight</span>
+            <svg class="icon rotate-0 transition-transform group-[.open]:rotate-180" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.25 8.29a.75.75 0 0 1-.02-1.08Z" clip-rule="evenodd"/></svg>
+          </button>
+          <div id="co" class="ml-10 mt-1 hidden animate-fadeIn space-y-1">
+            <a href="#" class="block px-2 py-1.5 rounded-lg text-muted hover:text-text hover:bg-gray-50 dark:hover:bg-slate-800">Courses</a>
+            <a href="#" class="block px-2 py-1.5 rounded-lg text-muted hover:text-text hover:bg-gray-50 dark:hover:bg-slate-800">Modules</a>
+          </div>
+        </div>
+
+        <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800"><svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0l-4 4m4-4-4-4"/></svg>Announcement</a>
+        <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800"><svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-3.866 0-7 1.79-7 4v4h14v-4c0-2.21-3.134-4-7-4Zm0 0V6m0 12v2"/></svg>Payments</a>
+
+        <div class="mt-6 pt-4 border-t">
+          <div class="px-2 text-xs uppercase text-muted mb-2">Account</div>
+          <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800"><svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 3v2.25M14.25 3v2.25M4.5 7.5h15m-12 4.5h9m-9 4.5h9M6.75 21h10.5A2.25 2.25 0 0 0 19.5 18.75V6.75A2.25 2.25 0 0 0 17.25 4.5H6.75A2.25 2.25 0 0 0 4.5 6.75v12A2.25 2.25 0 0 0 6.75 21Z"/></svg>Settings</a>
+          <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-xl text-red-600 hover:bg-gray-50 dark:hover:bg-slate-800"><svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-3A2.25 2.25 0 0 0 8.25 5.25V9M3 9h18m-2.25 0v10.5A1.5 1.5 0 0 1 17.25 21H6.75A1.5 1.5 0 0 1 5.25 19.5V9"/></svg>Logout</a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <main id="main" class="flex-1 lg:ml-0">
+      <!-- Desktop header -->
+      <div class="hidden lg:block sticky top-0 z-30 bg-white/90 dark:bg-slate-900/80 backdrop-blur border-b">
+        <div class="h-16 flex items-center gap-4 px-6">
+          <div class="relative flex-1 max-w-3xl">
+            <input id="search-desktop" placeholder="Search" class="w-full bg-white dark:bg-slate-900 border rounded-2xl pl-11 pr-32 py-3 outline-none focus:ring-2 ring-brand" />
+            <svg class="icon absolute left-4 top-1/2 -translate-y-1/2 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.35-4.35M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z"/></svg>
+            <button id="btn-search-desktop" class="absolute right-2 top-1/2 -translate-y-1/2 bg-brand text-white px-4 py-2 rounded-xl text-sm">Search</button>
+          </div>
+
+          <button id="btn-theme-desktop" class="p-2 border rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800" aria-label="Toggle theme">🌗</button>
+
+          <div class="relative">
+            <button id="btn-bell" class="relative p-2 border rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800" aria-haspopup="menu">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.172V11a6 6 0 1 0-12 0v3.172a2 2 0 0 1-.6 1.428L4 17h5m6 0a3 3 0 1 1-6 0m6 0H9"/></svg>
+              <span id="notif" class="absolute -right-1 -top-1 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-brand px-1 text-[10px] font-medium text-white">3</span>
+            </button>
+            <div id="menu-bell" class="hidden absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 border rounded-xl shadow-subtle p-2 animate-scaleIn">
+              <div class="text-sm text-muted px-2 py-1">Notifications</div>
+              <a href="#" class="block px-2 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800">New signup • 2m ago</a>
+              <a href="#" class="block px-2 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800">Payment received • 1h ago</a>
+              <a href="#" class="block px-2 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800">Server healthy • 3h ago</a>
+            </div>
+          </div>
+
+          <div class="relative">
+            <button id="btn-profile" class="flex items-center gap-3 p-1.5 border rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800" aria-haspopup="menu">
+              <img alt="User avatar" class="h-9 w-9 rounded-full" src="https://i.pravatar.cc/40?img=5"/>
+              <svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.25 8.29a.75.75 0 0 1-.02-1.08Z" clip-rule="evenodd"/></svg>
+            </button>
+            <div id="menu-profile" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-slate-900 border rounded-xl shadow-subtle p-2 animate-scaleIn">
+              <a href="#" class="block px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800">Profile</a>
+              <a href="#" class="block px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800">Settings</a>
+              <a href="#" class="block px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 text-red-600">Logout</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section class="px-4 lg:px-8 py-6 space-y-6">
+        <header class="space-y-1">
+          <h1 class="text-2xl font-semibold">Welcome back, Admin 👋</h1>
+          <p class="text-muted">You're logged in to the Kodex Control Center.</p>
+        </header>
+
+        <!-- Stat cards row 1 -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="rounded-2xl bg-white dark:bg-slate-900 border p-5 shadow-subtle">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="p-2 rounded-xl bg-brand/10 text-brand">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 0 0-5-3.87M9 20H4v-2a4 4 0 0 1 5-3.87M7 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm10 0a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/></svg>
+              </div>
+              <span class="text-sm text-muted">Total students</span>
+            </div>
+            <div class="text-3xl font-semibold">300</div>
+          </div>
+          <div class="rounded-2xl bg-white dark:bg-slate-900 border p-5 shadow-subtle">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="p-2 rounded-xl bg-brand/10 text-brand">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3M6 11h12M6 15h8M6 19h12"/></svg>
+              </div>
+              <span class="text-sm text-muted">Total Instructors</span>
+            </div>
+            <div class="text-3xl font-semibold">120</div>
+          </div>
+        </div>
+
+        <!-- Stat cards row 2 -->
+        <div id="cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div data-title="Total courses" class="rounded-2xl bg-white dark:bg-slate-900 border p-5 shadow-subtle hover:shadow transition">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="p-2 rounded-xl bg-brand/10 text-brand">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20m0 0V6a2 2 0 0 0-2-2H6.5A2.5 2.5 0 0 0 4 6.5v13Z"/></svg>
+              </div>
+              <span class="text-sm text-muted">Total courses</span>
+            </div>
+            <div class="text-3xl font-semibold">4</div>
+          </div>
+
+          <div data-title="Number of Modules" class="rounded-2xl bg-white dark:bg-slate-900 border p-5 shadow-subtle hover:shadow transition">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="p-2 rounded-xl bg-brand/10 text-brand">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"/></svg>
+              </div>
+              <span class="text-sm text-muted">Number of Modules</span>
+            </div>
+            <div class="text-3xl font-semibold">120</div>
+          </div>
+
+          <div data-title="Sign-ups This Month" class="rounded-2xl bg-white dark:bg-slate-900 border p-5 shadow-subtle hover:shadow transition">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="p-2 rounded-xl bg-brand/10 text-brand">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2m8-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/></svg>
+              </div>
+              <span class="text-sm text-muted">Sign-ups This Month</span>
+            </div>
+            <div class="text-3xl font-semibold">120</div>
+          </div>
+        </div>
+
+        <!-- Revenue chart -->
+        <section class="rounded-2xl bg-white dark:bg-slate-900 border p-5 shadow-subtle">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold">Admin Revenue</h2>
+            <div class="relative">
+              <button id="btn-year" class="flex items-center gap-2 px-3 py-2 border rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800">This Year
+                <svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.25 8.29a.75.75 0 0 1-.02-1.08Z" clip-rule="evenodd"/></svg>
+              </button>
+              <div id="menu-year" class="hidden absolute right-0 mt-2 w-40 bg-white dark:bg-slate-900 border rounded-xl shadow-subtle p-1">
+                <button class="block w-full text-left rounded-lg px-3 py-2 hover:bg-gray-50 dark:hover:bg-slate-800">This Year</button>
+                <button class="block w-full text-left rounded-lg px-3 py-2 hover:bg-gray-50 dark:hover:bg-slate-800">Last Year</button>
+                <button class="block w-full text-left rounded-lg px-3 py-2 hover:bg-gray-50 dark:hover:bg-slate-800">2023</button>
+              </div>
+            </div>
+          </div>
+          <div class="h-80"><canvas id="chart"></canvas></div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // Dark mode
+    const htmlEl = document.documentElement;
+    const setTheme = (dark) => { htmlEl.classList.toggle('dark', dark); localStorage.setItem('theme', dark ? 'dark' : 'light'); };
+    const saved = localStorage.getItem('theme'); if (saved === 'dark') setTheme(true);
+    document.getElementById('btn-theme').onclick = () => setTheme(!htmlEl.classList.contains('dark'));
+    document.getElementById('btn-theme-desktop').onclick = () => setTheme(!htmlEl.classList.contains('dark'));
+
+    // Sidebar controls (mobile)
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+    const openSidebar = () => { sidebar.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); }
+    const closeSidebar = () => { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); }
+    document.getElementById('btn-open').onclick = openSidebar;
+    document.getElementById('btn-close').onclick = closeSidebar;
+    overlay.onclick = closeSidebar;
+
+    // Accordions
+    document.querySelectorAll('[data-acc]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-acc');
+        const panel = document.getElementById(id);
+        const opened = !panel.classList.contains('hidden');
+        panel.classList.toggle('hidden', opened);
+        btn.classList.toggle('open', !opened);
+      })
+    })
+
+    // Menus
+    const toggleMenu = (btnId, menuId) => {
+      const btn = document.getElementById(btnId);
+      const menu = document.getElementById(menuId);
+      btn.addEventListener('click', (e) => { e.stopPropagation(); menu.classList.toggle('hidden'); });
+      document.addEventListener('click', (e) => { if (!menu.contains(e.target) && !btn.contains(e.target)) menu.classList.add('hidden'); });
+    }
+    toggleMenu('btn-profile', 'menu-profile');
+    toggleMenu('btn-bell', 'menu-bell');
+    toggleMenu('btn-year', 'menu-year');
+
+    // Search
+    function runSearch(q){
+      q = (q||'').trim().toLowerCase();
+      const cards = Array.from(document.querySelectorAll('#cards > div'));
+      let firstMatch = null;
+      cards.forEach(c => {
+        const match = c.dataset.title.toLowerCase().includes(q) || q === '';
+        c.classList.toggle('ring-2', q && match);
+        c.classList.toggle('ring-brand', q && match);
+        if(match && !firstMatch) firstMatch = c;
+      });
+      if(firstMatch) firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    document.getElementById('btn-search').onclick = () => runSearch(document.getElementById('search').value);
+    document.getElementById('search').addEventListener('keydown', e=>{ if(e.key==='Enter') runSearch(e.target.value) });
+    document.getElementById('btn-search-desktop').onclick = () => runSearch(document.getElementById('search-desktop').value);
+    document.getElementById('search-desktop').addEventListener('keydown', e=>{ if(e.key==='Enter') runSearch(e.target.value) });
+
+    // Notification badge demo
+    const notif = document.getElementById('notif');
+    document.getElementById('btn-bell').addEventListener('click', () => {
+      const n = Math.max(0, (parseInt(notif.textContent)||0) - 1);
+      notif.textContent = n; if(n===0) notif.classList.add('hidden');
+    });
+
+    // Chart.js setup
+    const ctx = document.getElementById('chart').getContext('2d');
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const values = [0,0,0,0,0,0,200000,1500000,10000,20000,10000,20000];
+    const gradient = ctx.createLinearGradient(0,0,0,300); gradient.addColorStop(0,'rgba(245,158,11,.25)'); gradient.addColorStop(1,'rgba(245,158,11,0)');
+    new Chart(ctx, {
+      type: 'line',
+      data: { labels: months, datasets: [{ label: 'This Year', data: values, tension: .35, borderColor: '#F59E0B', borderWidth: 3, pointRadius: 3, pointHoverRadius: 5, fill: true, backgroundColor: gradient }] },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(ctx.raw) } } },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: '#6B7280' } },
+          y: { grid: { color: 'rgba(31,41,55,0.08)' }, ticks: { color: '#6B7280', callback: v => v/1000 + 'k' } }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
